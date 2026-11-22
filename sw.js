@@ -3,7 +3,7 @@
    - Données (Supabase, fonction serveur, photos) : JAMAIS mises en cache ici
      (l'application garde elle-même la dernière liste et la file des photos à envoyer).
    Nouvelle version : changer VERSION. */
-const VERSION = 'v1.0.0';
+const VERSION = 'v1.1.0';   // 1.1.0 : lecture des photos sur le téléphone (Tesseract)
 const CACHE = 'belinga-documents-' + VERSION;
 const BASE = new URL('./', self.registration.scope).pathname;
 
