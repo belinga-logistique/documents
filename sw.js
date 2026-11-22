@@ -3,7 +3,7 @@
    - Données (Supabase, fonction serveur, photos) : JAMAIS mises en cache ici
      (l'application garde elle-même la dernière liste et la file des photos à envoyer).
    Nouvelle version : changer VERSION. */
-const VERSION = 'v1.1.1';   // 1.1.1 : « Se déconnecter » sur le profil et le PIN, lien ?deconnexion
+const VERSION = 'v1.2.0';   // 1.2.0 : alertes d'expiration des documents (notifications)
 const CACHE = 'belinga-documents-' + VERSION;
 const BASE = new URL('./', self.registration.scope).pathname;
 
@@ -15,6 +15,24 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then((k) => Promise.all(k.filter((n) => n.startsWith('belinga-documents-') && n !== CACHE).map((n) => caches.delete(n))))
     .then(() => self.clients.claim()));
 });
+// Alertes documents (version 1.2) : notification reçue même application fermée
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch { d = { corps: e.data && e.data.text() }; }
+  e.waitUntil(self.registration.showNotification(d.titre || '⚠️ Belinga Documents', {
+    body: d.corps || '', tag: d.tag || 'alerte-document', icon: BASE + 'icones/icone-192.png', badge: BASE + 'icones/icone-192.png',
+    data: { url: d.url || './' }, requireInteraction: true,
+  }));
+});
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const cible = new URL((e.notification.data && e.notification.data.url) || './', self.registration.scope).href;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((l) => {
+    const ouverte = l.find((c) => c.url.startsWith(self.registration.scope));
+    return ouverte ? ouverte.focus() : self.clients.openWindow(cible);
+  }));
+});
+
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
